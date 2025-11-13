@@ -1,0 +1,538 @@
+insert.php
+  <?php
+include 'conn.php';
+$x=$_POST["first_name"];
+$y=$_POST["last_name"];
+$s=$_POST["father_name"];
+$h=$_POST["user_name"];
+$f=$_POST["pas"];
+
+$servername="localhost";
+$username="root";
+$password="";
+$database="amir";
+$conn= connect("localhost","root","","amir");
+function ql($x , $y , $s , $h , $f,$conn)
+{
+$hash = password_hash($f, PASSWORD_DEFAULT);
+$q="INSERT INTO amir (first_name, last_name, father_name, user_name, pas)
+ VALUES ('$x' , '$y' , '$s' , '$h' , '$hash')";
+ mysqli_query($conn,$q);
+}
+ ql($x, $y, $s , $h, $f,$conn);
+?>
+
+welcome.php
+  <?php
+session_start();
+if (!isset($_SESSION['username'])) {
+    header("Location: login.php");
+    exit();
+}
+$username = $_SESSION['username'];
+?>
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>خوش آمدید</title>
+<style>
+    body { font-family: Arial, sans-serif; background: linear-gradient(135deg,#6a11cb,#2575fc); color: white; display: flex; justify-content:center; align-items:center; height:100vh; margin:0;}
+    .welcome-box { text-align:center; background: rgba(255,255,255,0.1); padding:60px 80px; border-radius:20px;}
+    h1 { font-size:3em; margin-bottom:20px; }
+    p { font-size:1.5em; margin-bottom:40px; }
+    a { color:white; background:#ff416c; padding:12px 30px; border-radius:50px; text-decoration:none; font-size:1.2em; }
+    a:hover { background:#ff4b2b; }
+</style>
+</head>
+<body>
+<div class="welcome-box">
+    <h1>خوش آمدی، <?php echo htmlspecialchars($username); ?>!</h1>
+    <p>از ورود شما خوشحالیم 🎉</p>
+    <a href="logout.php">خروج</a>
+</div>
+</body>
+</html>
+
+
+      login.php
+
+      <?php
+session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+$message = "";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['user_name']);
+    $password = trim($_POST['pas']);
+
+    $conn = new mysqli("localhost", "root", "", "amir");
+    if ($conn->connect_error) {
+        die("❌ خطا در اتصال به دیتابیس: " . $conn->connect_error);
+    }
+
+    $stmt = $conn->prepare("SELECT * FROM amir WHERE user_name = ? AND pas = ?");
+    $stmt->bind_param("ss", $username, $password);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result && $result->num_rows === 1) {
+        $_SESSION['username'] = $username;
+        header("Location: welcome.php");
+        exit();
+    } else {
+        $message = "<div class='msg error'>❌ نام کاربری یا رمز عبور اشتباه است</div>";
+    }
+
+    $stmt->close();
+    $conn->close();
+}
+?>
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>ورود کاربران</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #5b92b0, #2f6f85);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+    .container {
+        background-color: #fff;
+        padding: 40px 50px;
+        border-radius: 15px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+        width: 350px;
+    }
+    h2 { color: #2f6f85; margin-bottom: 25px; text-align: center; }
+    label { display: block; text-align: right; margin: 10px 0 5px; }
+    input[type="text"], input[type="password"] {
+        width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #bcd2da;
+    }
+    input[type="submit"] {
+        width: 100%; padding: 10px; border: none; border-radius: 8px;
+        background: linear-gradient(135deg, #2f6f85, #3fa0c6); color: white; cursor: pointer;
+    }
+    input[type="submit"]:hover { background: linear-gradient(135deg, #3fa0c6, #2f6f85); }
+    .msg { padding: 10px; border-radius: 8px; margin-bottom: 15px; font-weight: 600; font-size: 14px; }
+    .msg.error { background-color: #ffeaea; color: #a60000; border: 1px solid #f1b5b5; }
+    .footer {
+        margin-top: 20px;
+        font-size: 13px;
+        color: #5f7b83;
+        text-align: center;
+    }
+    .footer a {
+        color: #2f6f85;
+        text-decoration: none;
+        font-weight: bold;
+    }
+    .footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h2>ورود به حساب کاربری</h2>
+    <?php echo $message; ?>
+    <form method="POST" action="">
+        <label>نام کاربری</label>
+        <input type="text" name="user_name" required>
+        <label>رمز عبور</label>
+        <input type="password" name="pas" required>
+        <input type="submit" value="ورود">
+    </form>
+
+    <!-- لینک ثبت نام -->
+    <div class="footer">
+        حساب ندارید؟ <a href="form.php">ثبت نام کنید</a>
+    </div>
+</div>
+</body>
+</html>
+
+
+      foram.php
+      <!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>فرم ثبت نام</title>
+  <style>
+    :root{
+      --bg:#6996ae;
+      --card:#ffffff;
+      --accent:#2f6f85;
+      --muted:#6b7f85;
+      --radius:12px;
+    }
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: "Tahoma", "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, var(--bg) 0%, #5b8da0 100%);
+      -webkit-font-smoothing:antialiased;
+    }
+    .wrap{
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:30px;
+    }
+    .card{
+      background:var(--card);
+      width:100%;
+      max-width:520px;
+      border-radius:var(--radius);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      padding:28px;
+      text-align:right;
+      direction:rtl;
+    }
+    h1{
+      margin:0 0 14px 0;
+      color:var(--accent);
+      font-size:22px;
+    }
+    p.lead{
+      margin:0 0 20px 0;
+      color:var(--muted);
+      font-size:14px;
+    }
+    form .row{
+      display:flex;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    /* Responsive: stack on small screens */
+    @media (max-width:520px){
+      .row{flex-direction:column;}
+    }
+    label{
+      display:block;
+      font-size:13px;
+      margin-bottom:6px;
+      color:#284b56;
+    }
+    input[type="text"],
+    input[type="password"],
+    input[type="tel"]{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid #d6e4ea;
+      border-radius:8px;
+      font-size:14px;
+      outline:none;
+      box-sizing:border-box;
+      transition: box-shadow .15s, border-color .15s;
+    }
+    input:focus{
+      border-color:var(--accent);
+      box-shadow:0 4px 12px rgba(47,111,133,0.12);
+    }
+    .note{
+      font-size:12px;
+      color:#647c82;
+      margin-bottom:10px;
+    }
+    .actions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-top:16px;
+    }
+    button{
+      background:var(--accent);
+      color:white;
+      border:0;
+      padding:10px 16px;
+      border-radius:10px;
+      cursor:pointer;
+      font-size:14px;
+    }
+    button.secondary{
+      background:transparent;
+      color:var(--accent);
+      border:1px solid rgba(47,111,133,0.15);
+    }
+    .error{
+      color:#b22222;
+      font-size:13px;
+      margin-top:8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" role="main">
+      <h1>فرم ثبت نام</h1>
+      <p class="lead">لطفاً همهٔ فیلدها را تکمیل کنید. کد ملی باید دقیقاً ۱۰ رقم باشد.</p>
+
+      <!-- در اینجا action به insert.php اشاره می‌کند -->
+      <form id="regForm" action="insert.php" method="POST" novalidate>
+        <div class="row">
+          <div style="flex:1">
+            <label for="first_name">نام</label>
+            <input id="first_name" name="first_name" type="text" required autocomplete="given-name" placeholder="مثلاً: علی">
+          </div>
+          <div style="flex:1">
+            <label for="last_name">نام خانوادگی</label>
+            <input id="last_name" name="last_name" type="text" required autocomplete="family-name" placeholder="مثلاً: رضایی">
+          </div>
+        </div>
+
+        <div class="row">
+          <div style="flex:1">
+            <label for="father_name">اسم پدر</label>
+            <input id="father_name" name="father_name" type="text" required placeholder="اسم پدر">
+          </div>
+
+          <div style="flex:1">
+            <label for="national_code">کد ملی</label>
+            <input id="national_code" name="national_code" type="tel" inputmode="numeric"
+                   required maxlength="10" minlength="10" pattern="\d{10}"
+                   placeholder="۱۰ رقم - فقط عدد"
+                   title="کد ملی باید دقیقاً ۱۰ رقم عدد باشد">
+          </div>
+        </div>
+
+        <div class="row">
+          <div style="flex:1">
+            <label for="user_name">نام کاربری</label>
+            <input id="user_name" name="user_name" type="text" required autocomplete="username" placeholder="نام کاربری شما">
+          </div>
+          <div style="flex:1">
+            <label for="pas">رمز</label>
+            <input id="pas" name="pas" type="password" required minlength="6" placeholder="حداقل ۶ کاراکتر">
+          </div>
+        </div>
+
+        <div class="note">با زدن ثبت نام، اطلاعات به صورت امن ارسال می‌شود.</div>
+
+        <div class="actions">
+          <button type="submit">ثبت نام</button>
+          <button type="reset" class="secondary">پاک کردن</button>
+        </div>
+
+        <div id="formError" class="error" aria-live="polite" style="display:none"></div>
+      </form>
+    </div>
+  </div>
+
+<script>
+  (function(){
+    const form = document.getElementById('regForm');
+    const national = document.getElementById('national_code');
+    const errBox = document.getElementById('formError');
+
+    // اجازه‌ی ورود فقط اعداد در فیلد کد ملی
+    national.addEventListener('input', function(e){
+      // پاک کردن هر کاراکتر غیر عدد
+      this.value = this.value.replace(/[^\d]/g, '').slice(0,10);
+    });
+
+    form.addEventListener('submit', function(e){
+      errBox.style.display = 'none';
+      errBox.textContent = '';
+
+      // HTML5 validity را بررسی می‌کنیم
+      if (!form.checkValidity()) {
+        e.preventDefault();
+        // پیغام سفارشی برای کد ملی
+        if (!national.checkValidity()) {
+          errBox.textContent = 'کد ملی باید دقیقاً ۱۰ رقم عدد باشد.';
+          errBox.style.display = 'block';
+          national.focus();
+          return;
+        }
+        // اگر فیلد دیگری مشکل داشت، مرورگر پیغام پیش‌فرض خواهد داد اما ما پیغام عمومی می‌گذاریم:
+        errBox.textContent = 'لطفاً همهٔ فیلدها را صحیح و کامل پر کنید.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      // در اینجا اجازه می‌دهیم فرم ارسال شود (به insert.php)
+    });
+  })();
+</script>
+</body>
+</html>
+
+
+  selcte.php
+  <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// اتصال به دیتابیس
+$conn = new mysqli("localhost", "root", "", "save");
+
+if ($conn->connect_error) {
+    die("❌ خطا در اتصال به دیتابیس: " . $conn->connect_error);
+}
+
+// اجرای SELECT برای گرفتن داده‌ها
+$sql = "SELECT id, first_name, last_name, father_name, user_name FROM save_db ORDER BY id DESC";
+$result = $conn->query($sql);
+?>
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>لیست کاربران</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600&display=swap');
+
+body {
+    background: linear-gradient(135deg, #5b92b0, #2f6f85);
+    font-family: 'Vazirmatn', Tahoma, sans-serif;
+    margin: 0;
+    padding: 50px;
+    color: #333;
+    text-align: center;
+}
+
+h2 {
+    color: #fff;
+    margin-bottom: 25px;
+}
+
+.table-container {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    width: 80%;
+    max-width: 900px;
+    margin: auto;
+    overflow-x: auto;
+    animation: fadeIn 0.7s ease;
+}
+
+@keyframes fadeIn {
+  from {opacity: 0; transform: translateY(20px);}
+  to {opacity: 1; transform: translateY(0);}
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+}
+
+th {
+    background-color: #2f6f85;
+    color: #fff;
+    padding: 12px;
+    text-align: center;
+}
+
+td {
+    border-bottom: 1px solid #e0e0e0;
+    padding: 10px;
+    text-align: center;
+    color: #333;
+}
+
+tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+tr:hover {
+    background-color: #e3f2f9;
+    transition: 0.2s;
+}
+
+.no-data {
+    color: #555;
+    padding: 20px;
+    font-weight: 600;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 25px;
+    background: #2f6f85;
+    color: #fff;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+.back-link:hover {
+    background: #3fa0c6;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(47,111,133,0.3);
+}
+</style>
+</head>
+<body>
+
+<h2>📋 لیست کاربران ثبت‌شده</h2>
+
+<div class="table-container">
+<?php
+if ($result->num_rows > 0) {
+    echo "<table>";
+    echo "<tr>
+            <th>ردیف</th>
+            <th>نام</th>
+            <th>نام خانوادگی</th>
+            <th>نام پدر</th>
+            <th>نام کاربری</th>
+          </tr>";
+
+    $i = 1;
+    while ($row = $result->fetch_assoc()) {
+        echo "<tr>";
+        echo "<td>" . $i++ . "</td>";
+        echo "<td>" . htmlspecialchars($row['first_name']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['last_name']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['father_name']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['user_name']) . "</td>";
+        echo "</tr>";
+    }
+
+    echo "</table>";
+} else {
+    echo "<div class='no-data'>هیچ کاربری ثبت نشده است ❌</div>";
+}
+$conn->close();
+?>
+</div>
+
+<a href="login.php" class="back-link">بازگشت به صفحه ورود</a>
+
+</body>
+</html>
+
+      conn.php
+      <?php
+function connect($servername,$username,$password,$database)
+{
+$conn=mysqli_connect($servername,$username, $password, $database);
+  if ($conn)
+  {
+    echo"درست";
+    return ($conn);
+  }
+  else
+  {
+    echo"نادرست";
+  }
+     mysqli_connect($servername , $username , $password , $database);
+}
+?>
